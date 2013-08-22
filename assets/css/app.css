@@ -3,6 +3,10 @@
 	margin: 0 auto;
 }
 
+.center {
+	text-align: center;
+}
+
 .no-margin {
 	margin-top: 0;
 }
