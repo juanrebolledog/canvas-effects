@@ -17,9 +17,20 @@
         combined_ctx.drawImage(wait_img, 0, 0);
         original_ctx.drawImage(wait_img, 0, 0);
     }
+
+    function setErrorScreen (ev) {
+        red_ctx.drawImage(error_img, 0, 0);
+        green_ctx.drawImage(error_img, 0, 0);
+        blue_ctx.drawImage(error_img, 0, 0);
+        combined_ctx.drawImage(error_img, 0, 0);
+        original_ctx.drawImage(error_img, 0, 0);
+    }
+
     var wait_img = new Image();
+    var error_img = new Image();
     wait_img.src = 'assets/img/wait.png';
     wait_img.onload = setWaitScreen;
+    error_img.src = 'assets/img/error.png';
 
     var video = document.getElementById('video-player');
     var streaming = false;
@@ -34,8 +45,9 @@
             streaming = true;
         }
         video.play();
+        setWaitScreen();
     }, false);
-    console.log(snapshot_btn);
+
     for (var i=0; i<snapshot_btn.length; i++) {
         snapshot_btn[i].addEventListener('click', function(ev) {
             ImagePaint(video);
@@ -47,56 +59,55 @@
 
     function ImageProcess(c) {
         this.context = c;
-        this.combinedCanvas = document.getElementById('combined');
         this.imageHeight = this.context.canvas.height;
         this.imageWidth = this.context.canvas.width;
         this.source = {
-            image: c.getImageData(0, 0, width, height),
+            image: c.getImageData(0, 0, this.imageWidth, this.imageHeight),
             channels: {
                 blue: {
-                    image: c.getImageData(0, 0, width, height),
+                    image: c.getImageData(0, 0, this.imageWidth, this.imageHeight),
                 },
                 green: {
-                    image: c.getImageData(0, 0, width, height),
+                    image: c.getImageData(0, 0, this.imageWidth, this.imageHeight),
                 },
                 red: {
-                    image: c.getImageData(0, 0, width, height),
+                    image: c.getImageData(0, 0, this.imageWidth, this.imageHeight),
                 }
             }
         };
-        this.comb_ctx = this.combinedCanvas.getContext('2d');
 
         this.separateChannels = function() {
-            for (y = 0; y < height; y++) {
-                var inpos = 0;
-                for (x = 0; x < width; x++) {
-                    inpos = (y * width + x) * 4;
-                    red = inpos++;
-                    green = inpos++;
-                    blue = inpos++;
-                    alpha = inpos++;
+
+            for (y = 0; y < this.imageHeight; y++) {
+                for (x = 0; x < this.imageWidth; x++) {
+                    pos = (y * this.imageWidth + x) * 4;
                     var hlf = 0.2;
-                    var dbl = 1;
+                    var dbl = 2.0;
 
-                    r = this.source.image.data[red];
-                    g = this.source.image.data[green];
-                    b = this.source.image.data[blue];
-                    a = this.source.image.data[alpha];
+                    var red = pos++;
+                    var green = pos++;
+                    var blue = pos++;
+                    var alpha = pos++;
 
-                    this.source.channels.red.image.data[red] = r * dbl;
-                    this.source.channels.red.image.data[green] = g * hlf;
-                    this.source.channels.red.image.data[blue] = b * hlf;
-                    this.source.channels.red.image.data[alpha] = a;
+                    var r = this.source.image.data[red];
+                    var g = this.source.image.data[green];
+                    var b = this.source.image.data[blue];
+                    var a = this.source.image.data[alpha];
 
-                    this.source.channels.green.image.data[red] = r * hlf;
-                    this.source.channels.green.image.data[green] = g * dbl;
-                    this.source.channels.green.image.data[blue] = b * hlf;
-                    this.source.channels.green.image.data[alpha] = a;
+                    // red
+                    this.source.channels.red.image.data[red] = this.source.channels.red.image.data[red] * dbl;
+                    this.source.channels.red.image.data[green] = this.source.channels.red.image.data[green] * hlf;
+                    this.source.channels.red.image.data[blue] = this.source.channels.red.image.data[blue] * hlf;
 
-                    this.source.channels.blue.image.data[red] = r * hlf;
-                    this.source.channels.blue.image.data[green] = g * hlf;
-                    this.source.channels.blue.image.data[blue] = b * dbl;
-                    this.source.channels.blue.image.data[alpha] = a;
+                    // green
+                    this.source.channels.green.image.data[red] = this.source.channels.green.image.data[red] * hlf;
+                    this.source.channels.green.image.data[green] = this.source.channels.green.image.data[green] * dbl;
+                    this.source.channels.green.image.data[blue] = this.source.channels.green.image.data[blue] * hlf;
+
+                    // blue
+                    this.source.channels.blue.image.data[red] = this.source.channels.blue.image.data[red] * hlf;
+                    this.source.channels.blue.image.data[green] = this.source.channels.blue.image.data[green] * hlf;
+                    this.source.channels.blue.image.data[blue] = this.source.channels.blue.image.data[blue] * dbl;
                 }
             };
 
@@ -123,17 +134,17 @@
         };
         
         this.combineChannels = function() {
-
-            var pixels = 4 * height * width;
+            
+            var pixels = 4 * this.imageHeight * this.imageWidth;
             var offset = 4 * 7;
             var brightness = 0.9;
-            
+
             // merge green into red
             while (pixels--) {
                 this.source.channels.combined.image.data[pixels] = this.source.channels.combined.image.data[pixels] * brightness + this.source.channels.green.image.data[pixels+offset] * brightness;
             }
 
-            var pixels = 4 * height * width;
+            var pixels = 4 * this.imageHeight * this.imageWidth;
             
             // merge blue into red-green
             while (pixels--) {
@@ -149,7 +160,7 @@
             orig_dl_btn.href = original_canvas.toDataURL();
 
             comb_dl_btn.download = 'displaced.png';
-            comb_dl_btn.href = this.combinedCanvas.toDataURL();
+            comb_dl_btn.href = combined_canvas.toDataURL();
 
             return this;
         };
@@ -161,25 +172,32 @@
         imgProc.separateChannels().combineChannels();
     }
 
-    navigator.getMedia = (
-        navigator.getUserMedia ||
-        navigator.webkitGetUserMedia ||
-        navigator.mozGetUserMedia ||
-        navigator.msGetUserMedia
-    );
+    navigator.getMedia = (navigator.getUserMedia ||
+                        navigator.webkitGetUserMedia ||
+                        navigator.mozGetUserMedia ||
+                        navigator.msGetUserMedia);
 
-    navigator.getMedia(
-        {
-            video: true,
-            audio: false
-        },
-        function (stream) {
-            var vendorURL = window.URL || window.webkitURL;
-            video.src = vendorURL.createObjectURL(stream);
-        },
-        function (err) {
-            console.log('An error occured! ', err);
-        }
-    );
+    if (!navigator.getMedia) {
+        console.log('Webcam not supported?');
+        setErrorScreen();
+    } else {
+        navigator.getMedia(
+            {
+                video: true,
+                audio: false
+            },
+            function (stream) {
+                if (navigator.mozGetUserMedia) {
+                    video.mozSrcObject = stream;
+                } else {
+                var vendorURL = window.URL || window.webkitURL;
+                video.src = vendorURL.createObjectURL(stream);
+                }
+            },
+            function (err) {
+                console.log('An error occured! ', err);
+            }
+        );
+    }
 
 })(jQuery);
