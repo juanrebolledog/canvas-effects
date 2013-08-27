@@ -1,14 +1,18 @@
-(function (document, $) {
+(function ($) {
   var original_canvas = document.getElementById('original');
   var original_ctx = original_canvas.getContext('2d');
+  /**
   var red_canvas = document.getElementById('red');
   var red_ctx = red_canvas.getContext('2d');
   var green_canvas = document.getElementById('green');
   var green_ctx = green_canvas.getContext('2d');
   var blue_canvas = document.getElementById('blue');
   var blue_ctx = blue_canvas.getContext('2d');
+  */
   var combined_canvas = document.getElementById('combined');
   var combined_ctx = combined_canvas.getContext('2d');
+
+  var ImageProcessor = new ImageProcess();
 
   var wait_img = new Image();
   var error_img = new Image();
@@ -16,17 +20,21 @@
   error_img.src = 'assets/img/error.png';
 
   function setWaitScreen(ev) {
+    /*
     red_ctx.drawImage(wait_img, 0, 0);
     green_ctx.drawImage(wait_img, 0, 0);
     blue_ctx.drawImage(wait_img, 0, 0);
+    */
     combined_ctx.drawImage(wait_img, 0, 0);
     original_ctx.drawImage(wait_img, 0, 0);
   }
 
   function setErrorScreen(ev) {
+    /*
     red_ctx.drawImage(error_img, 0, 0);
     green_ctx.drawImage(error_img, 0, 0);
     blue_ctx.drawImage(error_img, 0, 0);
+    */
     combined_ctx.drawImage(error_img, 0, 0);
     original_ctx.drawImage(error_img, 0, 0);
   }
@@ -44,33 +52,49 @@
     video.play();
     setWaitScreen();
   }, false);
-  var i = 0;
-  for (i = 0;  i < snapshot_btn.length; i++) {
-    snapshot_btn[i].addEventListener('click', function (ev) {
-      ImagePaint(video);
-      ev.preventDefault();
-    }, false);
+
+  function snap(ev) {
+    ImagePaint(video);
+    ev.preventDefault();
   }
 
+  var i = 0;
+  for (i = 0;  i < snapshot_btn.length; i++) {
+    snapshot_btn[i].addEventListener('click', snap, false);
+  }
 
+  var offset_range = document.getElementById('offset');
+  offset_range.addEventListener('change', function (ev) {
+    var offset = ev.target.value;
+    ImageProcessor.setOffset(offset);
+  });
 
-  function ImageProcess(c) {
-    this.context = c;
-    this.imageHeight = this.context.canvas.height;
-    this.imageWidth = this.context.canvas.width;
-    this.source = {
+  function ImageProcess() {
+    this.context = null;
+    this.offset = 10;
+
+    this.setContext = function(c) {
+      this.context = c;
+      this.imageHeight = this.context.canvas.height;
+      this.imageWidth = this.context.canvas.width;
+      this.source = {
       image: c.getImageData(0, 0, this.imageWidth, this.imageHeight),
-      channels: {
-        blue: {
-          image: c.getImageData(0, 0, this.imageWidth, this.imageHeight),
-        },
-        green: {
-            image: c.getImageData(0, 0, this.imageWidth, this.imageHeight),
-        },
-        red: {
-            image: c.getImageData(0, 0, this.imageWidth, this.imageHeight),
+        channels: {
+          blue: {
+            image: c.getImageData(0, 0, this.imageWidth, this.imageHeight)
+          },
+          green: {
+              image: c.getImageData(0, 0, this.imageWidth, this.imageHeight)
+          },
+          red: {
+              image: c.getImageData(0, 0, this.imageWidth, this.imageHeight)
+          }
         }
-      }
+      };
+    }
+
+    this.setOffset = function(offset) {
+      this.offset = offset;
     };
 
     this.separateChannels = function() {
@@ -106,22 +130,25 @@
             this.source.channels.blue.image.data[green] = this.source.channels.blue.image.data[green] * hlf;
             this.source.channels.blue.image.data[blue] = this.source.channels.blue.image.data[blue] * dbl;
           }
-        };
+        }
 
+        /**
+         * Not painting for now
         var red_dl_btn = document.getElementById('red-canvas-download');
         red_ctx.putImageData(this.source.channels.red.image, 0, 0);
-        red_dl_btn.download = 'red.png'
+        red_dl_btn.download = 'red.png';
         red_dl_btn.href = red_canvas.toDataURL('image/png');
 
         var green_dl_btn = document.getElementById('green-canvas-download');
         green_ctx.putImageData(this.source.channels.green.image, 0, 0);
-        green_dl_btn.download = 'green.png'
+        green_dl_btn.download = 'green.png';
         green_dl_btn.href = green_canvas.toDataURL('image/png');
 
         var blue_dl_btn = document.getElementById('blue-canvas-download');
         blue_ctx.putImageData(this.source.channels.blue.image, 0, 0);
-        blue_dl_btn.download = 'blue.png'
+        blue_dl_btn.download = 'blue.png';
         blue_dl_btn.href = blue_canvas.toDataURL('image/png');
+        */
 
         return this;
     };
@@ -129,7 +156,7 @@
     this.combineChannels = function() {
 
       var pixels = 4 * this.imageHeight * this.imageWidth;
-      var offset = 4 * 7;
+      var offset = 4 * this.offset;
       var brightness = 0.9;
 
       var empty_canvas = document.createElement('canvas');
@@ -186,9 +213,9 @@
 
   var ImagePaint = function(element) {
       original_ctx.drawImage(element, 0, 0, 390, 292);
-      var imgProc = new ImageProcess(original_ctx);
-      imgProc.separateChannels().combineChannels();
-  }
+      ImageProcessor.setContext(original_ctx);
+      ImageProcessor.separateChannels().combineChannels();
+  };
 
   navigator.getMedia = (navigator.getUserMedia ||
       navigator.webkitGetUserMedia ||
@@ -215,7 +242,6 @@
       function (err) {
           console.log('An error occured! ', err);
       }
-      );
+    );
   }
-
-})(document, jQuery);
+})(jQuery);

@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Canvas</title>
+    <meta charset="utf8">
+    <title>Canvas Image Filters</title>
     <link rel="stylesheet" type="text/css" href="assets/css/bootstrap.css">
     <link rel="stylesheet" type="text/css" href="assets/css/app.css">
 </head>
@@ -14,9 +15,11 @@
                 <li class="active"><a href="#video" data-toggle="tab">Video</a></li>
                 <li><a href="#original-canvas" data-toggle="tab">Original</a></li>
                 <li><a href="#combined-canvas" data-toggle="tab">Displaced</a></li>
+                <!--
                 <li><a href="#red-canvas" data-toggle="tab">Red</a></li>
                 <li><a href="#green-canvas" data-toggle="tab">Green</a></li>
                 <li><a href="#blue-canvas" data-toggle="tab">Blue</a></li>
+                -->
                 
             </ul>
             <br>
@@ -43,11 +46,16 @@
                     <div class="caption">
                         <h3 class="no-margin">Displaced Channels</h3>
                         <p>
+                            <label for="offset">Offset of channels</label>
+                            <input type="range" id="offset" name="displace_offset" min="1" max="20">
+                        </p>
+                        <p>
                             <a class="canvas-download btn btn-default" id="combined-canvas-download">Download</a>
                             <a class="video-snapshot btn btn-default take-snapshot">Take Snapshot</a>
                         </p>
                     </div>
                 </div>
+                <!--
                 <div class="thumbnail tab-pane" id="red-canvas">
                     <canvas id="red" width="390" height="292"></canvas>
                     <div class="caption">
@@ -78,6 +86,7 @@
                         </p>
                     </div>
                 </div>
+                -->
             </div>
             <hr>
             <div class="center">
@@ -86,8 +95,6 @@
             </div>
         </div>
     </div>
-    <script type="text/javascript" src="assets/js/jquery.min.js"></script>
-    <script type="text/javascript" src="assets/js/bootstrap.js"></script>
     <script type="text/javascript" src="assets/js/canvas-effects.js"></script>
 </body>
 </html>
