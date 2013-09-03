@@ -1,17 +1,11 @@
 (function ($) {
+  var image_width = 390;
+  var image_height = 292;
   var original_canvas = document.getElementById('original');
   var original_ctx = original_canvas.getContext('2d');
-  /**
-  var red_canvas = document.getElementById('red');
-  var red_ctx = red_canvas.getContext('2d');
-  var green_canvas = document.getElementById('green');
-  var green_ctx = green_canvas.getContext('2d');
-  var blue_canvas = document.getElementById('blue');
-  var blue_ctx = blue_canvas.getContext('2d');
-  */
   var combined_canvas = document.getElementById('combined');
   var combined_ctx = combined_canvas.getContext('2d');
-
+  var img_file = document.getElementById('img-file');
   var ImageProcessor = new ImageProcess();
 
   var wait_img = new Image();
@@ -20,24 +14,28 @@
   error_img.src = 'assets/img/error.png';
 
   function setWaitScreen(ev) {
-    /*
-    red_ctx.drawImage(wait_img, 0, 0);
-    green_ctx.drawImage(wait_img, 0, 0);
-    blue_ctx.drawImage(wait_img, 0, 0);
-    */
     combined_ctx.drawImage(wait_img, 0, 0);
     original_ctx.drawImage(wait_img, 0, 0);
   }
 
   function setErrorScreen(ev) {
-    /*
-    red_ctx.drawImage(error_img, 0, 0);
-    green_ctx.drawImage(error_img, 0, 0);
-    blue_ctx.drawImage(error_img, 0, 0);
-    */
     combined_ctx.drawImage(error_img, 0, 0);
     original_ctx.drawImage(error_img, 0, 0);
   }
+
+  img_file.addEventListener('change', function(ev) {
+    var files = ev.target.files;
+    var reader = new FileReader();
+    var captured_img = new Image();
+    reader.onload = (function(theFile) {
+      return function(e) {
+        captured_img.src = e.target.result;
+        ImagePaint(captured_img);
+      };
+    })(files[0]);
+    reader.readAsDataURL(files[0]);
+    ev.preventDefault();
+  }, false);
 
   wait_img.onload = setWaitScreen;
 
@@ -67,6 +65,7 @@
   offset_range.addEventListener('change', function (ev) {
     var offset = ev.target.value;
     ImageProcessor.setOffset(offset);
+    ImageProcessor.combineChannels();
   });
 
   function ImageProcess() {
@@ -78,20 +77,20 @@
       this.imageHeight = this.context.canvas.height;
       this.imageWidth = this.context.canvas.width;
       this.source = {
-      image: c.getImageData(0, 0, this.imageWidth, this.imageHeight),
+      image: c.getImageData(0, 0, image_width, image_height),
         channels: {
           blue: {
-            image: c.getImageData(0, 0, this.imageWidth, this.imageHeight)
+            image: c.getImageData(0, 0, image_width, image_height)
           },
           green: {
-              image: c.getImageData(0, 0, this.imageWidth, this.imageHeight)
+              image: c.getImageData(0, 0, image_width, image_height)
           },
           red: {
-              image: c.getImageData(0, 0, this.imageWidth, this.imageHeight)
+              image: c.getImageData(0, 0, image_width, image_height)
           }
         }
       };
-    }
+    };
 
     this.setOffset = function(offset) {
       this.offset = offset;
@@ -99,9 +98,9 @@
 
     this.separateChannels = function() {
 
-        for (y = 0; y < this.imageHeight; y++) {
-          for (x = 0; x < this.imageWidth; x++) {
-            pos = (y * this.imageWidth + x) * 4;
+        for (y = 0; y < image_height; y++) {
+          for (x = 0; x < image_width; x++) {
+            pos = (y * image_width + x) * 4;
             var hlf = 0.2;
             var dbl = 2.0;
 
@@ -132,24 +131,6 @@
           }
         }
 
-        /**
-         * Not painting for now
-        var red_dl_btn = document.getElementById('red-canvas-download');
-        red_ctx.putImageData(this.source.channels.red.image, 0, 0);
-        red_dl_btn.download = 'red.png';
-        red_dl_btn.href = red_canvas.toDataURL('image/png');
-
-        var green_dl_btn = document.getElementById('green-canvas-download');
-        green_ctx.putImageData(this.source.channels.green.image, 0, 0);
-        green_dl_btn.download = 'green.png';
-        green_dl_btn.href = green_canvas.toDataURL('image/png');
-
-        var blue_dl_btn = document.getElementById('blue-canvas-download');
-        blue_ctx.putImageData(this.source.channels.blue.image, 0, 0);
-        blue_dl_btn.download = 'blue.png';
-        blue_dl_btn.href = blue_canvas.toDataURL('image/png');
-        */
-
         return this;
     };
 
@@ -162,12 +143,12 @@
       var empty_canvas = document.createElement('canvas');
       var empty_ctx = empty_canvas.getContext('2d');
       this.source.channels.combined = {
-        image: empty_ctx.getImageData(0, 0, this.imageWidth, this.imageHeight)
+        image: empty_ctx.getImageData(0, 0, image_width, image_height)
       };
 
-      for (y = 0; y < this.imageHeight; y++) {
-        for (x = 0; x < this.imageWidth; x++) {
-          pos = (y * this.imageWidth + x) * 4;
+      for (y = 0; y < image_height; y++) {
+        for (x = 0; x < image_width; x++) {
+          pos = (y * image_width + x) * 4;
           var hlf = 0.2;
           var dbl = 2.0;
 
@@ -212,7 +193,7 @@
   }
 
   var ImagePaint = function(element) {
-      original_ctx.drawImage(element, 0, 0, 390, 292);
+      original_ctx.drawImage(element, 0, 0, image_width, image_height);
       ImageProcessor.setContext(original_ctx);
       ImageProcessor.separateChannels().combineChannels();
   };
